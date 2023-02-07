@@ -1,5 +1,4 @@
 import axios from "axios";
-import { response } from "msw";
 import { useEffect, useState } from "react";
 import { Row } from "react-bootstrap";
 import { pricePerItem } from "../../constants";
@@ -14,13 +13,20 @@ const Options = ({ optionType }) => {
   const { totals } = useOrderDetails();
 
   useEffect(() => {
+    const controller = new AbortController();
     //optionType is scoops or toppings
     axios
-      .get(`http://localhost:3030/${optionType}`)
+      .get(`http://localhost:3030/${optionType}`, {
+        signal: controller.signal,
+      })
       .then((response) => setItems(response.data))
       .catch((error) => {
-        setError(true);
+        if (error.name !== "CanceledError") setError(true);
       });
+
+    return () => {
+      controller.abort();
+    };
   }, [optionType]);
 
   if (error) {
